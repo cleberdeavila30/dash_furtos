@@ -464,36 +464,36 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     
     // Carrega os dados iniciais do arquivo CSV local
-    const loadInitialData = () => {
-        // CORREÇÃO: Usar um nome de arquivo simples e sem espaços
-        const fileName = 'dados_furtos.csv';
-        fetch(fileName)
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error(`Erro na rede: ${response.statusText}`);
+const loadInitialData = () => {
+    // Usar um nome de arquivo simples e sem espaços
+    const fileName = 'dados_furtos.csv';
+    fetch(fileName)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`Erro na rede: ${response.statusText}`);
+            }
+            return response.text();
+        })
+        .then(csvText => {
+            Papa.parse(csvText, {
+                header: true,
+                skipEmptyLines: true,
+                complete: (results) => {
+                    updateDashboard(results.data);
+                },
+                error: (error) => {
+                    console.error('Erro ao analisar o CSV inicial:', error);
+                    loader.innerText = "Erro ao carregar dados iniciais.";
                 }
-                return response.text();
-            })
-            .then(csvText => {
-                Papa.parse(csvText, {
-                    header: true,
-                    skipEmptyLines: true,
-                    complete: (results) => {
-                        updateDashboard(results.data);
-                    },
-                    error: (error) => {
-                         console.error('Erro ao analisar o CSV inicial:', error);
-                         loader.innerText = "Erro ao carregar dados iniciais.";
-                    }
-                });
-            })
-            .catch(error => {
-                console.error('Erro ao buscar o arquivo CSV inicial:', error);
-                loader.style.display = 'none';
-                dashboardContent.innerHTML = `<div class="text-center text-red-400 p-8">Não foi possível carregar os dados. <strong>Por favor, renomeie seu arquivo para 'dados_furtos.csv'</strong> e certifique-se de que ele está na mesma pasta que este arquivo HTML.</div>`;
-                dashboardContent.classList.remove('opacity-0');
             });
-    };
+        })
+        .catch(error => {
+            console.error('Erro ao buscar o arquivo CSV inicial:', error);
+            loader.style.display = 'none';
+            dashboardContent.innerHTML = `<div class="text-center text-red-400 p-8">Não foi possível carregar os dados. <strong>Por favor, renomeie seu arquivo para 'dados_furtos.csv'</strong> e certifique-se de que ele está na mesma pasta que este arquivo HTML.</div>`;
+            dashboardContent.classList.remove('opacity-0');
+        });
+};
 
     // Configura o listener para o upload de novos arquivos
     fileUploadInput.addEventListener('change', (event) => {
@@ -505,7 +505,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 complete: (results) => {
                     updateDashboard(results.data);
                 },
-                 error: (error) => {
+                error: (error) => {
                     alert('Ocorreu um erro ao processar o arquivo CSV.');
                     console.error('Erro no upload:', error);
                 }
