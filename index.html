@@ -186,55 +186,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // Função principal para processar dados e atualizar o dashboard
-    const updateDashboard = (data) => {
-        loader.style.display = 'block';
-        dashboardContent.classList.add('opacity-0');
-        destroyCharts();
-        
-        // Simula um pequeno delay para a renderização, melhorando a experiência do usuário
-        setTimeout(() => {
-            // 1. Limpeza e pré-processamento dos dados
-            const validData = data.filter(row => row.DATA && row.HORA && row['TIPO DE FURTO']);
-            
-            validData.forEach(row => {
-                // Tratamento de datas inválidas que podem vir do CSV
-                const dateParts = row.DATA.split(/[-/]/);
-                let formattedDate;
-                if (dateParts.length === 3) {
-                     // Assumindo formato YYYY-MM-DD ou DD/MM/YYYY
-                    if (dateParts[0].length === 4) {
-                        formattedDate = `${dateParts[0]}-${dateParts[1]}-${dateParts[2]}`;
-                    } else {
-                        formattedDate = `${dateParts[2]}-${dateParts[1]}-${dateParts[0]}`;
-                    }
-                    try {
-                        row.fullDate = new Date(`${formattedDate}T${row.HORA}`);
-                        if (!isNaN(row.fullDate)) {
-                            row.year = row.fullDate.getFullYear();
-                            row.hour = row.fullDate.getHours();
-                        }
-                    } catch(e) {
-                        console.warn('Data inválida encontrada:', row.DATA, row.HORA);
-                        row.fullDate = null;
-                    }
-                } else {
-                    row.fullDate = null;
-                }
-            });
-            
-            const processedData = validData.filter(row => row.fullDate && !isNaN(row.fullDate));
-
-            // 2. Renderiza todos os componentes do dashboard
-            renderKPIs(processedData);
-            renderTemporalAnalysis(processedData);
-            renderCharts(processedData);
-            renderRankings(processedData);
-            renderTopAddressesTable(processedData);
-
-            loader.style.display = 'none';
-            dashboardContent.classList.remove('opacity-0');
-        }, 500);
-    };
+    // (Removido: função duplicada 'updateDashboard')
 
     // Renderiza os cartões de KPIs
     const renderKPIs = (data) => {
@@ -363,10 +315,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // No updateDashboard, salve os dados para reuso
-    // (Removido: declaração duplicada da função updateDashboard)
-
-    // Renderiza todos os gráficos
+    // Funções de renderização de gráficos e tabelas
     const renderCharts = (data) => {
         renderHourlyChart(data);
         renderDayOfWeekChart(data);
@@ -374,7 +323,7 @@ document.addEventListener('DOMContentLoaded', () => {
         renderShiftChart(data);
     };
 
-    const createOrUpdateChart = (id, type, labels, data, title) => {
+    const createOrUpdateChart = (id, type, labels, dataArr, title) => {
         const ctx = document.getElementById(id).getContext('2d');
         const gradient = ctx.createLinearGradient(0, 0, 0, 400);
         gradient.addColorStop(0, 'rgba(59, 130, 246, 0.5)');
@@ -386,7 +335,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 labels: labels,
                 datasets: [{
                     label: title,
-                    data: data,
+                    data: dataArr,
                     backgroundColor: type === 'bar' ? gradient : ['#3B82F6', '#EF4444', '#10B981', '#F59E0B', '#8B5CF6', '#EC4899', '#6b7280', '#f97316', '#14b8a6', '#d946ef'],
                     borderColor: '#3B82F6',
                     borderWidth: type === 'bar' ? 2 : 0,
@@ -509,6 +458,58 @@ document.addEventListener('DOMContentLoaded', () => {
             `;
         }).join('');
         tableBody.innerHTML = tableContent;
+    };
+
+    // Atualiza o dashboard (única definição)
+    const updateDashboard = (data) => {
+        window._dashboardData = data;
+        loader.style.display = 'block';
+        dashboardContent.classList.add('opacity-0');
+        destroyCharts();
+        
+        // Simula um pequeno delay para a renderização, melhorando a experiência do usuário
+        setTimeout(() => {
+            // 1. Limpeza e pré-processamento dos dados
+            const validData = data.filter(row => row.DATA && row.HORA && row['TIPO DE FURTO']);
+            
+            validData.forEach(row => {
+                // Tratamento de datas inválidas que podem vir do CSV
+                const dateParts = row.DATA.split(/[-/]/);
+                let formattedDate;
+                if (dateParts.length === 3) {
+                     // Assumindo formato YYYY-MM-DD ou DD/MM/YYYY
+                    if (dateParts[0].length === 4) {
+                        formattedDate = `${dateParts[0]}-${dateParts[1]}-${dateParts[2]}`;
+                    } else {
+                        formattedDate = `${dateParts[2]}-${dateParts[1]}-${dateParts[0]}`;
+                    }
+                    try {
+                        row.fullDate = new Date(`${formattedDate}T${row.HORA}`);
+                        if (!isNaN(row.fullDate)) {
+                            row.year = row.fullDate.getFullYear();
+                            row.hour = row.fullDate.getHours();
+                        }
+                    } catch(e) {
+                        console.warn('Data inválida encontrada:', row.DATA, row.HORA);
+                        row.fullDate = null;
+                    }
+                } else {
+                    row.fullDate = null;
+                }
+            });
+            
+            const processedData = validData.filter(row => row.fullDate && !isNaN(row.fullDate));
+
+            // 2. Renderiza todos os componentes do dashboard
+            renderKPIs(processedData);
+            renderTemporalAnalysis(processedData);
+            renderCharts(processedData);
+            renderRankings(processedData);
+            renderTopAddressesTable(processedData);
+
+            loader.style.display = 'none';
+            dashboardContent.classList.remove('opacity-0');
+        }, 500);
     };
     
     // Carrega os dados iniciais do arquivo CSV local
