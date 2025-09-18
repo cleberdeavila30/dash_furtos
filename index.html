@@ -485,7 +485,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                     try {
                         row.fullDate = new Date(`${formattedDate}T${row.HORA}`);
-                        if (!isNaN(row.fullDate)) {
+                        // Adicione este log para conferir os anos processados
+                        console.log("Anos encontrados:", [...new Set(validData.map(r => r.year))]);
+                        if (row.fullDate && !isNaN(row.fullDate)) {
                             row.year = row.fullDate.getFullYear();
                             row.hour = row.fullDate.getHours();
                         }
