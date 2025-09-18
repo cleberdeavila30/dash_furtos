@@ -73,6 +73,36 @@
         <!-- Análises Temporais -->
         <div class="bg-gray-800 p-4 rounded-lg shadow mb-6">
             <h2 class="text-xl font-semibold mb-4 text-white">Análise Temporal Comparativa</h2>
+            <div class="flex flex-wrap gap-4 mb-4">
+                <div>
+                    <label class="block text-sm text-gray-300 mb-1">Ano 1</label>
+                    <select id="yearA" class="bg-gray-700 text-white rounded px-2 py-1">
+                        <!-- Opções serão preenchidas pelo JS -->
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm text-gray-300 mb-1">Ano 2</label>
+                    <select id="yearB" class="bg-gray-700 text-white rounded px-2 py-1">
+                        <!-- Opções serão preenchidas pelo JS -->
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm text-gray-300 mb-1">Trimestre</label>
+                    <select id="quarter" class="bg-gray-700 text-white rounded px-2 py-1">
+                        <option value="1">1º</option>
+                        <option value="2">2º</option>
+                        <option value="3">3º</option>
+                        <option value="4">4º</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm text-gray-300 mb-1">Semestre</label>
+                    <select id="semester" class="bg-gray-700 text-white rounded px-2 py-1">
+                        <option value="1">1º</option>
+                        <option value="2">2º</option>
+                    </select>
+                </div>
+            </div>
             <div id="temporal-analysis" class="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
                 <!-- Análises trimestrais e semestrais aqui -->
             </div>
@@ -273,50 +303,68 @@ document.addEventListener('DOMContentLoaded', () => {
             container.innerHTML = `<p class="col-span-3 text-center">Sem dados para exibir.</p>`;
             return;
         }
-        
+
+        // Preenche os selects de ano dinamicamente
+        const years = [...new Set(data.map(d => d.year))].sort();
+        const yearASelect = document.getElementById('yearA');
+        const yearBSelect = document.getElementById('yearB');
+        if (yearASelect.options.length === 0) {
+            years.forEach(y => {
+                yearASelect.innerHTML += `<option value="${y}">${y}</option>`;
+                yearBSelect.innerHTML += `<option value="${y}">${y}</option>`;
+            });
+            yearASelect.value = years[0];
+            yearBSelect.value = years[years.length - 1];
+        }
+
+        // Pega valores selecionados
+        const yearA = parseInt(yearASelect.value);
+        const yearB = parseInt(yearBSelect.value);
+        const quarter = parseInt(document.getElementById('quarter').value);
+        const semester = parseInt(document.getElementById('semester').value);
+
         const getQuarter = (date) => Math.floor(date.getMonth() / 3) + 1;
         const getSemester = (date) => Math.floor(date.getMonth() / 6) + 1;
-        
-        const now = new Date();
-        const currentYear = now.getFullYear();
-        const currentQuarter = getQuarter(now);
-        const currentSemester = getSemester(now);
-        
-        const lastQuarter = currentQuarter === 1 ? 4 : currentQuarter - 1;
-        const yearOfLastQuarter = currentQuarter === 1 ? currentYear - 1 : currentYear;
-        
-        const lastSemester = currentSemester === 1 ? 2 : 1;
-        const yearOfLastSemester = currentSemester === 1 ? currentYear - 1 : currentYear;
 
-        const countBy = (filterFn) => data.filter(filterFn).length;
+        // Filtra os dados por ano e trimestre/semestre
+        const quarterA = data.filter(d => d.year === yearA && getQuarter(d.fullDate) === quarter).length;
+        const quarterB = data.filter(d => d.year === yearB && getQuarter(d.fullDate) === quarter).length;
 
-        const currentQuarterCount = countBy(d => d.year === currentYear && getQuarter(d.fullDate) === currentQuarter);
-        const lastQuarterCount = countBy(d => d.year === yearOfLastQuarter && getQuarter(d.fullDate) === lastQuarter);
-        
-        const currentSemesterCount = countBy(d => d.year === currentYear && getSemester(d.fullDate) === currentSemester);
-        const lastSemesterCount = countBy(d => d.year === yearOfLastSemester && getSemester(d.fullDate) === lastSemester);
+        const semesterA = data.filter(d => d.year === yearA && getSemester(d.fullDate) === semester).length;
+        const semesterB = data.filter(d => d.year === yearB && getSemester(d.fullDate) === semester).length;
 
-        let quarterChange = lastQuarterCount > 0 ? ((currentQuarterCount - lastQuarterCount) / lastQuarterCount) * 100 : (currentQuarterCount > 0 ? 100 : 0);
-        let semesterChange = lastSemesterCount > 0 ? ((currentSemesterCount - lastSemesterCount) / lastSemesterCount) * 100 : (currentSemesterCount > 0 ? 100 : 0);
-        
+        // Variação percentual
+        const quarterChange = quarterA > 0 ? ((quarterB - quarterA) / quarterA) * 100 : 0;
+        const semesterChange = semesterA > 0 ? ((semesterB - semesterA) / semesterA) * 100 : 0;
+
         container.innerHTML = `
             <div>
-                <p class="text-sm text-gray-400">Trimestre Atual vs Anterior</p>
-                <p class="text-xl font-bold">${currentQuarterCount} vs ${lastQuarterCount}</p>
+                <p class="text-sm text-gray-400">Trimestre ${quarter} (${yearA} vs ${yearB})</p>
+                <p class="text-xl font-bold">${quarterA} vs ${quarterB}</p>
                 <p class="font-semibold ${quarterChange >= 0 ? 'text-red-400' : 'text-green-400'}">${quarterChange.toFixed(1)}%</p>
             </div>
             <div>
-                <p class="text-sm text-gray-400">Semestre Atual vs Anterior</p>
-                <p class="text-xl font-bold">${currentSemesterCount} vs ${lastSemesterCount}</p>
+                <p class="text-sm text-gray-400">Semestre ${semester} (${yearA} vs ${yearB})</p>
+                <p class="text-xl font-bold">${semesterA} vs ${semesterB}</p>
                 <p class="font-semibold ${semesterChange >= 0 ? 'text-red-400' : 'text-green-400'}">${semesterChange.toFixed(1)}%</p>
             </div>
-             <div>
-                <p class="text-sm text-gray-400">Total Anual (${currentYear})</p>
-                <p class="text-xl font-bold">${countBy(d => d.year === currentYear)}</p>
+            <div>
+                <p class="text-sm text-gray-400">Total Anual (${yearB})</p>
+                <p class="text-xl font-bold">${data.filter(d => d.year === yearB).length}</p>
                 <p class="font-semibold text-gray-400">Ocorrências</p>
             </div>
         `;
     };
+
+    // Adicione listeners para atualizar ao mudar os selects
+    ['yearA', 'yearB', 'quarter', 'semester'].forEach(id => {
+        document.getElementById(id).addEventListener('change', () => {
+            renderTemporalAnalysis(window._dashboardData || []);
+        });
+    });
+
+    // No updateDashboard, salve os dados para reuso
+    // (Removido: declaração duplicada da função updateDashboard)
 
     // Renderiza todos os gráficos
     const renderCharts = (data) => {
