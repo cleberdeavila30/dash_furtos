@@ -147,7 +147,7 @@
                            <th class="p-3">Endereço</th>
                            <th class="p-3 text-center">Ocorrências</th>
                            <th class="p-3">Dia Crítico</th>
-                           <th class="p-3">Local Comum</th>
+                           <th class="p-3">Hora Mais Frequente</th> <!-- alterado aqui -->
                            <th class="p-3">Tipo de Furto Comum</th>
                         </tr>
                     </thead>
@@ -450,14 +450,17 @@ document.addEventListener('DOMContentLoaded', () => {
         const tableContent = top5.map(([address, count]) => {
             const addressData = data.filter(row => row['ENDEREÇO'] === address);
             const mostFrequentDay = getMode(addressData.map(d => d['DIA DA SEMANA']));
-            const mostFrequentLocal = getMode(addressData.map(d => d['LOCAL']));
+            // NOVO: hora mais frequente
+            const mostFrequentHour = getMode(addressData.map(d => 
+                d.hour !== undefined ? `${String(d.hour).padStart(2, '0')}:00` : 'N/A'
+            ));
             const mostFrequentTheftType = getMode(addressData.map(d => d['TIPO DE FURTO']));
             return `
                 <tr class="border-b border-gray-700 hover:bg-gray-700/50">
                     <td class="p-3 font-medium">${address}</td>
                     <td class="p-3 text-center font-bold">${count}</td>
                     <td class="p-3">${mostFrequentDay}</td>
-                    <td class="p-3">${mostFrequentLocal}</td>
+                    <td class="p-3">${mostFrequentHour}</td>
                     <td class="p-3">${mostFrequentTheftType}</td>
                 </tr>
             `;
