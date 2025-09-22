@@ -197,17 +197,22 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         const totalRecords = data.length;
-        
-        const currentYear = new Date().getFullYear();
-        const lastYear = currentYear - 1;
 
-        const recordsCurrentYear = data.filter(d => d.year === currentYear).length;
-        const recordsLastYear = data.filter(d => d.year === lastYear).length;
-        
+        // Descobre o maior período de 2025
+        const lastDate2025 = data
+            .filter(d => d.year === 2025)
+            .reduce((max, curr) => curr.fullDate > max ? curr.fullDate : max, new Date('2000-01-01'));
+
+        // Filtra 2025 até a última data
+        const records2025 = data.filter(d => d.year === 2025 && d.fullDate <= lastDate2025).length;
+
+        // Filtra 2024 até o mesmo período
+        const records2024 = data.filter(d => d.year === 2024 && d.fullDate <= new Date(lastDate2025.setFullYear(2024))).length;
+
         let yearComparison = 0;
-        if (recordsLastYear > 0) {
-            yearComparison = ((recordsCurrentYear - recordsLastYear) / recordsLastYear) * 100;
-        } else if (recordsCurrentYear > 0) {
+        if (records2024 > 0) {
+            yearComparison = ((records2025 - records2024) / records2024) * 100;
+        } else if (records2025 > 0) {
             yearComparison = 100;
         }
         
@@ -225,7 +230,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const kpis = [
             { label: 'Total de Ocorrências', value: totalRecords.toLocaleString('pt-BR'), icon: 'shield-alert' },
             { 
-                label: `Variação Anual (${lastYear} vs ${currentYear})`, 
+                label: `Variação Anual (2024 vs 2025, mesmo período)`, 
                 value: `${yearComparison.toFixed(1)}%`, 
                 icon: yearComparison >= 0 ? 'trending-up' : 'trending-down',
                 color: yearComparison >= 0 ? 'text-red-400' : 'text-green-400'
