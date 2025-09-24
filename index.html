@@ -147,12 +147,33 @@
                            <th class="p-3">Endereço</th>
                            <th class="p-3 text-center">Ocorrências</th>
                            <th class="p-3">Dia Crítico</th>
-                           <th class="p-3">Hora Mais Frequente</th> <!-- alterado aqui -->
+                           <th class="p-3">Local Comum</th>
                            <th class="p-3">Tipo de Furto Comum</th>
                         </tr>
                     </thead>
                     <tbody id="topAddressesTableBody">
                         <!-- Linhas da tabela serão inseridas aqui -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Tabela de Top 10 Locais com Mais Ocorrências -->
+        <div class="bg-gray-800 p-4 rounded-lg shadow mt-6">
+            <h2 class="text-xl font-semibold mb-4">Top 10 Locais com Mais Ocorrências</h2>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left table-auto">
+                    <thead>
+                        <tr class="border-b border-gray-600">
+                            <th class="p-3">Local</th>
+                            <th class="p-3 text-center">Ocorrências</th>
+                            <th class="p-3">Dia Mais Frequente</th>
+                            <th class="p-3">Hora Mais Frequente</th>
+                            <th class="p-3">Tipo de Furto Mais Frequente</th>
+                        </tr>
+                    </thead>
+                    <tbody id="topLocalsTableBody">
+                        <!-- Linhas da tabela serão inseridas aqui pelo JS -->
                     </tbody>
                 </table>
             </div>
@@ -236,7 +257,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 color: yearComparison >= 0 ? 'text-red-400' : 'text-green-400'
             },
             { label: 'Horário de Pico', value: criticalHour !== 'N/A' ? `${String(criticalHour).padStart(2, '0')}:00 - ${String(parseInt(criticalHour)+1).padStart(2,'0')}:00` : 'N/A', icon: 'clock' },
-            { label: 'Principal Tipo de Furto', value: topTheftType, icon: 'swords' }
+            { label: 'Principal Tipo de FURTO', value: topTheftType, icon: 'swords' }
         ];
 
         kpiContainer.innerHTML = kpis.map(kpi => `
@@ -450,14 +471,46 @@ document.addEventListener('DOMContentLoaded', () => {
         const tableContent = top5.map(([address, count]) => {
             const addressData = data.filter(row => row['ENDEREÇO'] === address);
             const mostFrequentDay = getMode(addressData.map(d => d['DIA DA SEMANA']));
-            // NOVO: hora mais frequente
-            const mostFrequentHour = getMode(addressData.map(d => 
-                d.hour !== undefined ? `${String(d.hour).padStart(2, '0')}:00` : 'N/A'
-            ));
+            const mostFrequentLocal = getMode(addressData.map(d => d['LOCAL']));
             const mostFrequentTheftType = getMode(addressData.map(d => d['TIPO DE FURTO']));
             return `
                 <tr class="border-b border-gray-700 hover:bg-gray-700/50">
                     <td class="p-3 font-medium">${address}</td>
+                    <td class="p-3 text-center font-bold">${count}</td>
+                    <td class="p-3">${mostFrequentDay}</td>
+                    <td class="p-3">${mostFrequentLocal}</td>
+                    <td class="p-3">${mostFrequentTheftType}</td>
+                </tr>
+            `;
+        }).join('');
+        tableBody.innerHTML = tableContent;
+    };
+
+    // Função para renderizar a tabela dos 10 locais com mais ocorrências
+    const renderTopLocalsTable = (data) => {
+        const tableBody = document.getElementById('topLocalsTableBody');
+        const localCounts = data.reduce((acc, curr) => {
+            const local = curr['LOCAL'] || 'Não informado';
+            acc[local] = (acc[local] || 0) + 1;
+            return acc;
+        }, {});
+        const top10 = Object.entries(localCounts).sort((a, b) => b[1] - a[1]).slice(0, 10);
+
+        if (top10.length === 0) {
+            tableBody.innerHTML = `<tr><td colspan="5" class="text-center p-4">Nenhum dado de local para analisar.</td></tr>`;
+            return;
+        }
+
+        const tableContent = top10.map(([local, count]) => {
+            const localData = data.filter(row => (row['LOCAL'] || 'Não informado') === local);
+            const mostFrequentDay = getMode(localData.map(d => d['DIA DA SEMANA']));
+            const mostFrequentHour = getMode(localData.map(d =>
+                d.hour !== undefined ? `${String(d.hour).padStart(2, '0')}:00` : 'N/A'
+            ));
+            const mostFrequentTheftType = getMode(localData.map(d => d['TIPO DE FURTO']));
+            return `
+                <tr class="border-b border-gray-700 hover:bg-gray-700/50">
+                    <td class="p-3 font-medium">${local}</td>
                     <td class="p-3 text-center font-bold">${count}</td>
                     <td class="p-3">${mostFrequentDay}</td>
                     <td class="p-3">${mostFrequentHour}</td>
@@ -516,6 +569,7 @@ document.addEventListener('DOMContentLoaded', () => {
             renderCharts(processedData);
             renderRankings(processedData);
             renderTopAddressesTable(processedData);
+            renderTopLocalsTable(processedData); // Renderiza a tabela de Top 10 Locais
 
             loader.style.display = 'none';
             dashboardContent.classList.remove('opacity-0');
